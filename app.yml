@@ -1,0 +1,70 @@
+- name: manager install
+  vars:
+    manager_path: /root/manager
+  hosts: app
+  tasks:
+  - name: enable epel
+    yum:
+      name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+      state: present
+
+  - name: Install easy_install
+    yum:
+      name:
+        - python-setuptools
+        - python-pip
+        - mono-core.x86_64
+      enablerepo: "epel"
+
+  - name: pip httplib2
+    # ansible uri module requires httplib2
+    pip: name=httplib2 extra_args="--user"
+
+  - name: set version
+    uri:
+      url: https://www.manager.io/version.txt
+      return_content: yes
+    register: this
+    #failed_when: "'AWESOME' not in this.content"
+
+  - name: debug me
+    debug:
+      var: this.content
+
+  - name: create manager folder
+    file:
+      path: "{{manager_path}}"
+      state: directory
+
+  - name: extract manager
+    unarchive:
+      src: "https://d2ap5zrlkavzl7.cloudfront.net/{{ this.content }}/ManagerServer.tar.gz"
+      dest: "{{manager_path}}"
+      remote_src: yes
+
+  - firewalld:
+      zone: public
+      port: 8080/tcp
+      permanent: yes
+      state: enabled     # mono-complete
+
+  - name: create manager service
+    template:
+      src: manager-server.service.j2
+      dest: /etc/systemd/system/manager-server.service
+
+  - name: start manager service
+    systemd:
+      service: manager-server
+      state: started
+
+  - name: debug host
+    debug:
+      var: hostvars[inventory_hostname]
+
+  - name: check manager running
+    wait_for:
+      host: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+      port: 8080
+      state: started
+
