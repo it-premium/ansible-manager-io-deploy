@@ -58,10 +58,6 @@
       service: manager-server
       state: started
 
-  - name: debug host
-    debug:
-      var: hostvars[inventory_hostname]
-
   - name: check manager running
     wait_for:
       host: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
