@@ -41,9 +41,9 @@
     file:
       path: "{{ item }}"
       state: directory
-    loop:
-      - "{{manager_path}}"
-      - "{{manager_data}}"
+    with_list:
+      - "{{ manager_path }}"
+      - "{{ manager_data }}"
 
 
   - name: extract manager
