@@ -1,0 +1,32 @@
+- name: manager data backup
+  hosts: app
+  vars:
+    manager_data: /var/lib/manager
+  tasks:
+    - name: get date
+      command: "date +%y%m%d-%H%M"
+      register: date
+
+    - name: deb
+      debug: var=date.stdout
+
+    - name: set temp file
+      set_fact: manager_temp_archive="/tmp/data-{{date.stdout}}.tar.gz" manager_s3_archive="data-{{date.stdout}}.tar.gz"
+
+    - name: create backup
+      archive:
+        path: "{{ manager_data }}/*"
+        dest: "{{ manager_temp_archive }}"
+
+    - name: backup manager to s3
+      aws_s3:
+        aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+        aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+        bucket: "manager.it-premium.local"
+        src: "{{ manager_temp_archive }}"
+        object: "{{ manager_s3_archive }}"
+        region: "eu-central-1"
+        mode: put
+
+    - name: remove archive
+      file: path="{{ manager_temp_archive }}" state=absent

@@ -1,6 +1,7 @@
 - name: manager install
   vars:
-    manager_path: /root/manager
+    manager_path: /usr/share/manager
+    manager_data: /var/lib/manager
   hosts: app
   tasks:
   - name: enable epel
@@ -21,7 +22,8 @@
     pip:
       name:
         - httplib2
-        - boto
+        - boto3
+        - botocore
       extra_args: "--user"
 
   - name: set version
@@ -31,14 +33,18 @@
     register: this
     #failed_when: "'AWESOME' not in this.content"
 
-  - name: debug me
+  - name: debug version
     debug:
-      var: this.content
+      msg: "Avaliable Manager version is {{ this.content }}"
 
-  - name: create manager folder
+  - name: create manager folders
     file:
-      path: "{{manager_path}}"
+      path: "{{ item }}"
       state: directory
+    loop:
+      - "{{manager_path}}"
+      - "{{manager_data}}"
+
 
   - name: extract manager
     unarchive:
@@ -59,6 +65,7 @@
 
   - name: start manager service
     systemd:
+      daemon-reload: yes
       service: manager-server
       state: started
 
