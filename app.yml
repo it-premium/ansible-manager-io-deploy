@@ -16,9 +16,13 @@
         - mono-core.x86_64
       enablerepo: "epel"
 
-  - name: pip httplib2
+  - name: pip dependencies
     # ansible uri module requires httplib2
-    pip: name=httplib2 extra_args="--user"
+    pip:
+      name:
+        - httplib2
+        - boto
+      extra_args: "--user"
 
   - name: set version
     uri:
