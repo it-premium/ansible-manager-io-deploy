@@ -18,8 +18,9 @@ pipeline {
             }
         }
         stage('Restore data') {
+            when { expression { params.RESTORE }}
+
             steps{
-                when { expression { param.RESTORE }}
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'manager-credentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     script{
                         env.AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID
