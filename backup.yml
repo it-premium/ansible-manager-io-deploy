@@ -7,11 +7,11 @@
       command: "date +%y%m%d-%H%M"
       register: date
 
-    - name: deb
-      debug: var=date.stdout
-
     - name: set temp file
       set_fact: manager_temp_archive="/tmp/data-{{date.stdout}}.tar.gz" manager_s3_archive="data-{{date.stdout}}.tar.gz"
+
+    - name: print version
+      debug: msg="Created manager backup version {{manager_s3_archive}}"
 
     - name: create backup
       archive:
