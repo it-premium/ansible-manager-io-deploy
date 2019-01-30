@@ -2,25 +2,26 @@
   hosts: app
   vars:
     manager_data: /var/lib/manager
+    backup_date: "190130-0935"
   tasks:
     - name: restore manager from s3
       aws_s3:
         aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
         aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
         bucket: "manager.it-premium.local"
-        object: "data.tar.gz"
-        dest: "/tmp/data.tar.gz"
+        object: "data-{{ backup_date }}.tar.gz"
+        dest: "/tmp/data-{{ backup_date }}.tar.gz"
         region: "eu-central-1"
         mode: get
 
     - name: extract backup
       unarchive:
-        src: "/tmp/data.tar.gz"
+        src: "/tmp/data-{{ backup_date }}.tar.gz"
         dest: "{{ manager_data }}"
         remote_src: yes
 
     - name: remove archive
-      file: path="/tmp/data.tar.gz" state=absent
+      file: path="/tmp/data-{{ backup_date }}.tar.gz" state=absent
 
     - name: restart manager service
       systemd:
