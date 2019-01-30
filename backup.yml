@@ -1,5 +1,6 @@
+# Python PIP botocore and boto3 required for S3
 - name: manager data backup
-  hosts: app
+  hosts: old
   vars:
     manager_data: /var/lib/manager
   tasks:
@@ -26,6 +27,7 @@
         src: "{{ manager_temp_archive }}"
         object: "{{ manager_s3_archive }}"
         region: "eu-central-1"
+        ignore_nonexistent_bucket: yes
         mode: put
 
     - name: remove archive
