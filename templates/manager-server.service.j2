@@ -3,7 +3,7 @@ After=network.target
 
 [Service]
 LimitNOFILE=1048576
-ExecStart=/usr/bin/mono {{manager_path}}/ManagerServer.exe -port 8080 -path {{manager_data}}
+ExecStart=/usr/bin/mono {{manager_path}}/ManagerServer.exe -port {{manager_port}} -path {{manager_data}}
 Restart=on-failure
 StartLimitInterval=600
 

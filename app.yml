@@ -2,6 +2,7 @@
   vars:
     manager_path: /usr/share/manager
     manager_data: /var/lib/manager
+    manager_port: 8080
   hosts: app
   tasks:
   - name: enable epel
@@ -54,7 +55,7 @@
 
   - firewalld:
       zone: public
-      port: 8080/tcp
+      port: "{{ manager_port }}/tcp"
       permanent: yes
       state: enabled     # mono-complete
 
@@ -72,6 +73,6 @@
   - name: check manager running
     wait_for:
       host: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-      port: 8080
+      port: "{{ manager_port }}"
       state: started
 
