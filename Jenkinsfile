@@ -8,6 +8,8 @@ pipeline {
         booleanParam(name: 'RESTORE',
                      defaultValue: false,
                      description: 'Restore manager dump')
+        string(name: 'BACKUP_DATE', defaultValue: '190130-0935', description: 'Restore manager DB on date') 
+
     }
 
     stages{
@@ -26,7 +28,7 @@ pipeline {
                         env.AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID
                         env.AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY
                         
-                        ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "hosts.ini", playbook: 'restore.yml'
+                        ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "hosts.ini", playbook: 'restore.yml', extraVars: "${params.BACKUP_DATE}"
                     }
 
                 }
