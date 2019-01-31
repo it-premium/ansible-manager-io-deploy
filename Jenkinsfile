@@ -19,6 +19,16 @@ pipeline {
                 ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "hosts.ini", playbook: 'app.yml'
             }
         }
+
+        stage('Select restore date') {
+            steps {
+                script {
+                    env.RELEASE_SCOPE = input message: 'User input required', ok: 'Release!',
+                        parameters: [choice(name: 'RELEASE_SCOPE', choices: 'patch\nminor\nmajor', description: 'What is the release scope?')]
+                }
+            }
+        }
+
         stage('Restore data') {
             when { expression { params.RESTORE }}
 
