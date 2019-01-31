@@ -22,9 +22,14 @@ pipeline {
 
         stage('Select restore date') {
             steps {
-                script {
-                    files = s3FindFiles bucket: "manager.it-premium.local", glob: "**", onlyFiles: true
-                    file = input message: 'User input required', ok: 'Release!', parameters: [choice(name: 'RELEASE_SCOPE', choices: files.collect{ it.name }, description: 'What is the release scope?')]
+                withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'manager-credentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
+                    script{
+                        // env.AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID
+                        // env.AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY
+                        
+                        files = s3FindFiles bucket: "manager.it-premium.local", glob: "**", onlyFiles: true
+                        file = input message: 'User input required', ok: 'Release!', parameters: [choice(name: 'RELEASE_SCOPE', choices: files.collect{ it.name }, description: 'What is the release scope?')]
+                    }
                 }
             }
         }
