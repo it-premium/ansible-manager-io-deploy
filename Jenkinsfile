@@ -28,14 +28,16 @@ pipeline {
                         withAWS(region:'eu-central-1') {
                             script{
                                 files = s3FindFiles bucket: "manager.it-premium.local", glob: "**", onlyFiles: true
-                                env.BACKUP_FILE = input message: 'Select backup to restore', ok: 'Restore!', parameters: [choice(name: 'RESTORE_FILE', choices: files.collect{ it.name }, description: 'Manager backup to restore.')]
+                                BACKUP_FILE = input message: 'Select backup to restore',
+                                    ok: 'Restore!',
+                                    parameters: [choice(name: 'RESTORE_FILE', choices: files.collect{ it.name }, description: 'Manager backup to restore.')]
                             }
                         }
 
                         env.AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID
                         env.AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY
                         
-                        ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "hosts.ini", playbook: 'restore.yml', extraVars: [ backup_file: env.BACKUP_FILE ]
+                        ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "hosts.ini", playbook: 'restore.yml', extraVars: [ backup_file: BACKUP_FILE ]
                     }
 
                 }
