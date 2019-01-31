@@ -23,8 +23,8 @@ pipeline {
         stage('Select restore date') {
             steps {
                 script {
-                    env.RELEASE_SCOPE = input message: 'User input required', ok: 'Release!',
-                        parameters: [choice(name: 'RELEASE_SCOPE', choices: 'patch\nminor\nmajor', description: 'What is the release scope?')]
+                    files = s3FindFiles bucket: "manager.it-premium.local", glob: "**", onlyFiles: true
+                    file = input message: 'User input required', ok: 'Release!', parameters: [choice(name: 'RELEASE_SCOPE', choices: files.collect{ it.name }, description: 'What is the release scope?')]
                 }
             }
         }
