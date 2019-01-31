@@ -4,6 +4,9 @@
     manager_data: /var/lib/manager
     backup_date: "190130-0935"
   tasks:
+    - name: register url
+      set_fact: backup_file="{{ data-{{ backup_date }}.tar.gz }}" backup_full_path="{{ /tmp/data-{{ backup_date }}.tar.gz }}"
+
     - name: restore manager from s3
       aws_s3:
         aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
@@ -16,12 +19,12 @@
 
     - name: extract backup
       unarchive:
-        src: "/tmp/data-{{ backup_date }}.tar.gz"
+        src: "{{ backup_full_path }}"
         dest: "{{ manager_data }}"
         remote_src: yes
 
     - name: remove archive
-      file: path="/tmp/data-{{ backup_date }}.tar.gz" state=absent
+      file: path="{{ backup_full_path }}" state=absent
 
     - name: restart manager service
       systemd:
