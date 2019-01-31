@@ -2,18 +2,18 @@
   hosts: app
   vars:
     manager_data: /var/lib/manager
-    backup_date: "190130-0935"
+    backup_file: "data-190130-0935.tar.gz"
   tasks:
     - name: register url
-      set_fact: backup_file="{{ data-{{ backup_date }}.tar.gz }}" backup_full_path="{{ /tmp/data-{{ backup_date }}.tar.gz }}"
+      set_fact: backup_full_path="/tmp/{{ backup_file }}"
 
     - name: restore manager from s3
       aws_s3:
         aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
         aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
         bucket: "manager.it-premium.local"
-        object: "data-{{ backup_date }}.tar.gz"
-        dest: "/tmp/data-{{ backup_date }}.tar.gz"
+        object: "{{ backup_file }}"
+        dest: "{{ backup_full_path }}"
         region: "eu-central-1"
         mode: get
 
