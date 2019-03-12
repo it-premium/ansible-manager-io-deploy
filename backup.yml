@@ -1,8 +1,8 @@
 # Python PIP botocore and boto3 required for S3
 - name: manager data backup
   hosts: old
-  vars:
-    manager_data: /var/lib/manager
+  # vars:
+  #   manager_data: /var/lib/manager
   tasks:
     - name: get date
       command: "date +%y%m%d-%H%M"
