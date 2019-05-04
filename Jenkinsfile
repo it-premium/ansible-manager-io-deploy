@@ -20,6 +20,8 @@ pipeline {
         }
 
         stage('Select restore date') {
+            when { expression { params.RESTORE }}
+
             steps {
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'manager-credentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     withAWS(region:'eu-central-1') {
