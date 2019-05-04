@@ -68,7 +68,7 @@
     systemd:
       daemon-reload: yes
       service: manager-server
-      state: started
+      state: restarted
 
   - name: check manager running
     wait_for:
