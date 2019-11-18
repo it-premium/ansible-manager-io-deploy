@@ -8,6 +8,7 @@ pipeline {
         booleanParam(name: 'RESTORE',
                      defaultValue: false,
                      description: 'Restore manager dump')
+        choice(choices: ['qa', 'prod'], description: 'Chose deployment env?', name: 'DEPLOY_ENV')
         // string(name: 'BACKUP_DATE', defaultValue: '190130-0935', description: 'Restore manager DB on date') 
 
     }
@@ -15,7 +16,7 @@ pipeline {
     stages{
         stage('Deploy Manager') {
             steps{
-                ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "hosts.ini", playbook: 'app.yml'
+                ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "inventories/${DEPLOY_ENV}/hosts.ini", playbook: 'app.yml'
             }
         }
 
@@ -43,7 +44,7 @@ pipeline {
                         env.AWS_ACCESS_KEY_ID=AWS_ACCESS_KEY_ID
                         env.AWS_SECRET_ACCESS_KEY=AWS_SECRET_ACCESS_KEY
                         
-                        ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "hosts.ini", playbook: 'restore.yml', extraVars: [ backup_file: env.BACKUP_FILE ]
+                        ansiblePlaybook credentialsId: 'jenkins-ssh-core', inventory: "inventories/${DEPLOY_ENV}/hosts.ini", playbook: 'restore.yml', extraVars: [ backup_file: env.BACKUP_FILE ]
                     }
 
                 }
