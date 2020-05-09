@@ -1,6 +1,6 @@
 # Python PIP botocore and boto3 required for S3
 - name: manager data backup
-  hosts: old
+  hosts: manager
   # vars:
   #   manager_data: /var/lib/manager
   tasks:
