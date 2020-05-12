@@ -10,8 +10,6 @@ pipeline {
 
     stages{
         stage('Backup Manager') {
-            when { expression { params.RESTORE }}
-
             steps{
                 withCredentials([[$class: 'AmazonWebServicesCredentialsBinding', accessKeyVariable: 'AWS_ACCESS_KEY_ID', credentialsId: 'manager-credentials', secretKeyVariable: 'AWS_SECRET_ACCESS_KEY']]) {
                     script{
