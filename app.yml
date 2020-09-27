@@ -27,16 +27,16 @@
         - botocore
       extra_args: "--user"
 
-  - name: set version
-    uri:
-      url: https://www.manager.io/version.txt
-      return_content: yes
-    register: this
-    #failed_when: "'AWESOME' not in this.content"
+  # - name: set version
+  #   uri:
+  #     url: https://www.manager.io/version.txt
+  #     return_content: yes
+  #   register: this
+  #   #failed_when: "'AWESOME' not in this.content"
 
-  - name: debug version
-    debug:
-      msg: "Avaliable Manager version is {{ this.content }}"
+  # - name: debug version
+  #   debug:
+  #     msg: "Avaliable Manager version is {{ this.content }}"
 
   - name: create manager folders
     file:
