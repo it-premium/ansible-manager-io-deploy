@@ -16,6 +16,7 @@
         - python-setuptools
         - python-pip
         - mono-core.x86_64
+        - libicu.x86_64
       enablerepo: "epel"
 
   - name: pip dependencies
@@ -64,6 +65,11 @@
     template:
       src: manager-server.service.j2
       dest: /etc/systemd/system/manager-server.service
+
+  - name: set running permissions
+    file:
+      path: "{{manager_path}}/ManagerServer"
+      mode: '0755'
 
   - name: start manager service
     systemd:
