@@ -50,7 +50,7 @@
   - name: extract manager
     unarchive:
       # src: "https://d2ap5zrlkavzl7.cloudfront.net/{{ this.content }}/ManagerServer.tar.gz"
-      src: "https://github.com/Manager-io/Manager.zip/releases/latest/download/Manager.zip"
+      src: "https://github.com/Manager-io/Manager.zip/releases/latest/download/ManagerServer-Linux-x64.zip"
       dest: "{{manager_path}}"
       remote_src: yes
 
