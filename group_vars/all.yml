@@ -1,0 +1,2 @@
+nginx:
+  template: manager-qa.conf

@@ -1,0 +1,19 @@
+- hosts: nginx
+  tasks:
+    - name: create template
+      template:
+        src: nginx.conf.j2
+        dest: "/etc/nginx/conf.d/{{ nginx.template }}"
+
+    - name: Verify Nginx config
+      become: yes
+      command: nginx -t
+      changed_when: false
+
+    - name: reload nginx
+      become: yes
+      command: nginx -s reload
+
+    - name: Check that you can connect (GET) to a page and it returns a status 200
+      uri:
+        url: "http://{{ app.domain }}"
