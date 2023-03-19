@@ -2,6 +2,7 @@
   vars:
     manager_path: /usr/share/manager
     manager_data: /var/lib/manager
+    manager_backups: /var/backups/manager
     manager_port: 8080
   hosts: app
   tasks:
@@ -35,9 +36,6 @@
   #   register: this
   #   #failed_when: "'AWESOME' not in this.content"
 
-  # - name: debug version
-  #   debug:
-  #     msg: "Avaliable Manager version is {{ this.content }}"
 
   - name: create manager folders
     file:
@@ -46,13 +44,19 @@
     with_list:
       - "{{ manager_path }}"
       - "{{ manager_data }}"
-
+      - "{{ manager_backups }}"
+    tags: [backup]
+  
+  - name: backup old manager
+    community.general.archive:
+      path: "{{ manager_path }}"
+      dest: "{{ manager_backups }}/{{ ansible_date_time.iso8601_basic_short }}.tgz"
+    tags: [backup]
 
   - name: extract manager
     unarchive:
-      # src: "https://d2ap5zrlkavzl7.cloudfront.net/{{ this.content }}/ManagerServer.tar.gz"
-      src: "https://github.com/Manager-io/Manager.zip/releases/latest/download/ManagerServer-Linux-x64.zip"
-      dest: "{{manager_path}}"
+      src: "https://github.com/Manager-io/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz"
+      dest: "{{ manager_path }}"
       remote_src: yes
 
   - firewalld:
