@@ -1,32 +1,36 @@
 - name: manager data restore
   hosts: app
-  vars:
-    manager_data: /var/lib/manager
-    backup_file: "data-190130-0935.tar.gz"
   tasks:
     - name: register url
       set_fact: backup_full_path="/tmp/{{ backup_file }}"
 
-    - name: restore manager from s3
-      aws_s3:
-        aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
-        aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
-        bucket: "manager.it-premium.local"
-        object: "{{ backup_file }}"
-        dest: "{{ backup_full_path }}"
-        region: "eu-central-1"
-        mode: get
+    # - name: restore manager from s3
+    #   aws_s3:
+    #     aws_access_key: "{{ lookup('env', 'AWS_ACCESS_KEY_ID') }}"
+    #     aws_secret_key: "{{ lookup('env', 'AWS_SECRET_ACCESS_KEY') }}"
+    #     bucket: "manager.it-premium.local"
+    #     object: "{{ backup_file }}"
+    #     dest: "{{ backup_full_path }}"
+    #     region: "eu-central-1"
+    #     mode: get
 
-    - name: extract backup
+    - name: Stop manager
+      become: True
+      systemd:
+        name: manager-server
+        state: stopped
+
+    - name: Extract backup
       unarchive:
         src: "{{ backup_full_path }}"
         dest: "{{ manager_data }}"
         remote_src: yes
 
-    - name: remove archive
-      file: path="{{ backup_full_path }}" state=absent
+    # - name: Remove archive
+    #   file: path="{{ backup_full_path }}" state=absent
 
-    - name: restart manager service
+    - name: Start manager service
+      become: True
       systemd:
         service: manager-server
-        state: restarted
+        state: started

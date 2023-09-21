@@ -1,89 +1,81 @@
 - name: manager install
-  vars:
-    manager_path: /usr/share/manager
-    manager_data: /var/lib/manager
-    manager_backups: /var/backups/manager
-    manager_port: 8080
   hosts: app
   tasks:
-  - name: enable epel
-    yum:
-      name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
-      state: present
+    - include_tasks: install-ubuntu.yml
+      when: ansible_distribution == 'Ubuntu'
+      tags: [consul]
 
-  - name: Install easy_install
-    yum:
-      name:
-        - python-setuptools
-        - python-pip
-        - mono-core.x86_64
-        - libicu.x86_64
-      enablerepo: "epel"
+    - include_tasks: install-centos.yml
+      when: ansible_distribution == 'CentOS' or ansible_distribution == 'Rocky'
 
-  - name: pip dependencies
-    # ansible uri module requires httplib2
-    pip:
-      name:
-        - httplib2
-        - boto3
-        - botocore
-      extra_args: "--user"
+    # - name: set version
+    #   uri:
+    #     url: https://www.manager.io/version.txt
+    #     return_content: yes
+    #   register: this
+    #   #failed_when: "'AWESOME' not in this.content"
 
-  # - name: set version
-  #   uri:
-  #     url: https://www.manager.io/version.txt
-  #     return_content: yes
-  #   register: this
-  #   #failed_when: "'AWESOME' not in this.content"
+    - name: create manager folders
+      become: True
+      file:
+        path: "{{ item }}"
+        state: directory
+        owner: itpremium
+        group: itpremium
+      with_list:
+        - "{{ manager_path }}"
+        - "{{ manager_data }}"
+        - "{{ manager_backups }}"
+      tags: [backup]
 
+    - name: backup old manager
+      community.general.archive:
+        path: "{{ manager_path }}"
+        dest: "{{ manager_backups }}/{{ ansible_date_time.iso8601_basic_short }}.tgz"
+      tags: [backup]
 
-  - name: create manager folders
-    file:
-      path: "{{ item }}"
-      state: directory
-    with_list:
-      - "{{ manager_path }}"
-      - "{{ manager_data }}"
-      - "{{ manager_backups }}"
-    tags: [backup]
-  
-  - name: backup old manager
-    community.general.archive:
-      path: "{{ manager_path }}"
-      dest: "{{ manager_backups }}/{{ ansible_date_time.iso8601_basic_short }}.tgz"
-    tags: [backup]
+    - name: extract manager
+      unarchive:
+        src: "https://github.com/Manager-io/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz"
+        dest: "{{ manager_path }}"
+        remote_src: yes
 
-  - name: extract manager
-    unarchive:
-      src: "https://github.com/Manager-io/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz"
-      dest: "{{ manager_path }}"
-      remote_src: yes
+    - firewalld:
+        zone: public
+        port: "{{ manager_port }}/tcp"
+        permanent: yes
+        state: enabled # mono-complete
+      when: firewalld_enabled
 
-  - firewalld:
-      zone: public
-      port: "{{ manager_port }}/tcp"
-      permanent: yes
-      state: enabled     # mono-complete
+    - name: create manager service
+      become: True
+      template:
+        src: manager-server.service.j2
+        dest: /etc/systemd/system/manager-server.service
 
-  - name: create manager service
-    template:
-      src: manager-server.service.j2
-      dest: /etc/systemd/system/manager-server.service
+    - name: set running permissions
+      file:
+        path: "{{manager_path}}/ManagerServer"
+        mode: "0755"
 
-  - name: set running permissions
-    file:
-      path: "{{manager_path}}/ManagerServer"
-      mode: '0755'
+    - name: start manager service
+      become: True
+      systemd:
+        daemon-reload: yes
+        service: manager-server
+        state: restarted
 
-  - name: start manager service
-    systemd:
-      daemon-reload: yes
-      service: manager-server
-      state: restarted
+    - name: check manager running
+      wait_for:
+        host: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
+        port: "{{ manager_port }}"
+        state: started
 
-  - name: check manager running
-    wait_for:
-      host: "{{ hostvars[inventory_hostname]['ansible_default_ipv4']['address'] }}"
-      port: "{{ manager_port }}"
-      state: started
-
+    - name: Register services
+      community.general.consul:
+        service_name: "{{ manager_consul_name }}"
+        service_port: "{{ manager_port }}"
+        tags:
+          - "{{ inventory_hostname }}"
+          - "{{ env }}"
+      tags: [consul]

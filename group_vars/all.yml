@@ -1,2 +1,13 @@
 nginx:
   template: manager-qa.conf
+
+firewalld_enabled: False
+
+manager_path: /usr/share/manager
+manager_data: /var/lib/manager
+manager_backups: /var/backups/manager
+manager_port: 8080
+
+manager_consul_name: manager
+
+backup_file: "data-190130-0935.tar.gz"

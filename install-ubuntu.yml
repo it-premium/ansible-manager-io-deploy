@@ -1,0 +1,8 @@
+- name: Install Consul module
+  become: True
+  ansible.builtin.apt:
+    name: "{{ item }}"
+    state: present
+  tags: [consul]
+  loop:
+    - python3-consul

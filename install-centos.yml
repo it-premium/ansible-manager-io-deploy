@@ -1,0 +1,22 @@
+- name: enable epel
+  yum:
+    name: http://dl.fedoraproject.org/pub/epel/epel-release-latest-7.noarch.rpm
+    state: present
+
+- name: Install easy_install
+  yum:
+    name:
+      - python-setuptools
+      - python-pip
+      - mono-core.x86_64
+      - libicu.x86_64
+    enablerepo: "epel"
+
+- name: pip dependencies
+  # ansible uri module requires httplib2
+  pip:
+    name:
+      - httplib2
+      - boto3
+      - botocore
+    extra_args: "--user"
