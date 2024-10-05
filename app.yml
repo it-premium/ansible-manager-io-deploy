@@ -71,11 +71,13 @@
         port: "{{ manager_port }}"
         state: started
 
-    - name: Register services
-      community.general.consul:
-        service_name: "{{ manager_consul_name }}"
-        service_port: "{{ manager_port }}"
-        tags:
-          - "{{ inventory_hostname }}"
-          - "{{ env }}"
-      tags: [consul]
+    # - name: Register services
+    #   community.general.consul:
+    #     service_name: "{{ manager_consul_name }}"
+    #     service_port: "{{ manager_port }}"
+    #     tags:
+    #       - "{{ inventory_hostname }}"
+    #       - "{{ env }}"
+    #       - "traefik.enable=true"
+    #       - "traefik.http.routers.manager.rule=Host(`qa.manager.it-premium.internal`)"
+    #   tags: [consul]
