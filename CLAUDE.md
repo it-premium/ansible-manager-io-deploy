@@ -22,16 +22,30 @@ make production
 make staging
 ```
 
-### Backup & Restore
+### Backup & Restore (Nomad/Restic — Recommended)
 
 ```bash
-# Trigger Nomad scheduled backup (runs restic snapshot to host volume)
+# 1. Trigger fresh prod backup
 nomad job periodic force volume-backup-manager
 
-# Ansible-based backup to S3 (requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
+# 2. Check logs for snapshot ID
+nomad alloc logs <ALLOC_ID>
+# Output: "snapshot 526593c4 saved"
+
+# 3. Restore to QA (stops service, restores, starts service automatically)
+nomad job dispatch -meta snapshot_id=<SNAPSHOT_ID> volume-restore-manager
+```
+
+Nomad job files live in `../nomad/manager-backup.nomad` and `../nomad/manager-restore.nomad`.
+Vault secrets use workload identity (Nomad 1.9+) via `kv/data/default/volume-restore-manager/backups`.
+
+### Backup & Restore (Ansible — Legacy)
+
+```bash
+# Backup to S3 (requires AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY)
 ansible-playbook -i inventories/prod/hosts.ini backup.yml
 
-# Restore from S3 backup
+# Restore from S3 (note: S3 download step in restore.yml is commented out, manual transfer needed)
 ansible-playbook -i inventories/prod/hosts.ini restore.yml -e backup_file=data-YYMMDD-HHMM.tar.gz
 ```
 
@@ -69,5 +83,7 @@ Jenkins credentials: `jenkins-ssh-core` (SSH), `manager-credentials` (AWS S3).
 ### Backup Strategy
 
 Two backup mechanisms exist:
-1. **Nomad periodic job** (`volume-backup-manager`): runs daily at 23:58 UTC, uses restic, keeps last 24 snapshots
-2. **Ansible playbook** (`backup.yml`): archives data to S3 via Jenkins pipeline
+1. **Nomad periodic job** (`volume-backup-manager`): runs daily at 23:58 UTC, uses restic to S3 bucket `it-premium-infra-backups`, keeps last 24 snapshots. Restore job (`volume-restore-manager`) is parameterized and targets QA node pool.
+2. **Ansible playbook** (`backup.yml`): archives data as tar.gz to S3 bucket `manager.it-premium.local` via Jenkins pipeline
+
+Prod→QA replication uses the Nomad approach: backup prod snapshot, then dispatch restore to QA with the snapshot ID.
