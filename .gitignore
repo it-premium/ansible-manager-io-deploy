@@ -1,0 +1,19 @@
+# Python / uv
+.venv/
+__pycache__/
+*.pyc
+
+# Claude Code: local-only state.
+# .claude/ itself is intentionally NOT ignored so team-shared content
+# (skills, agents, project-level settings.json) can be committed.
+.claude/settings.local.json
+.claude/scheduled_tasks.lock
+.claude/history/
+.claude/projects/
+.claude/todos/
+
+# Misplaced .claude/ created when running claude-code from a subdir
+templates/.claude/
+
+# Stray Manager.io data archives at repo root
+/data-*.tar.gz
