@@ -1,0 +1,10 @@
+[project]
+name = "ansible-manager-io-deploy"
+version = "0.1.0"
+description = "Ansible deployment automation for Manager.io"
+requires-python = ">=3.11"
+dependencies = [
+    "ansible-core>=2.16",
+    "boto3",
+    "python-consul",
+]

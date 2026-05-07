@@ -8,19 +8,30 @@ Ansible deployment automation for **Manager.io** accounting software. Manages in
 
 ## Common Commands
 
+### One-time setup
+
+```bash
+# Install Python deps (ansible-core, boto3, python-consul) and Ansible collections
+make bootstrap
+```
+
+`make bootstrap` runs `uv sync` (creates `.venv` from `pyproject.toml` / `uv.lock`) and installs Ansible collections from `requirements.yml`.
+
 ### Deploy
 
 ```bash
-# Production upgrade (downloads latest Manager.io release from GitHub, restarts service)
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/prod/hosts.ini app.yml
-
 # QA upgrade
-ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/qa/hosts.ini app.yml
-
-# Or via Makefile (uses pipenv)
-make production
 make staging
+
+# Production upgrade
+make production
+
+# Or directly (skipping the Makefile / uv wrapper)
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/qa/hosts.ini app.yml
+ANSIBLE_HOST_KEY_CHECKING=False ansible-playbook -i inventories/prod/hosts.ini app.yml
 ```
+
+Both `make` targets shell out to `uv run -- ansible-playbook ...` against the matching inventory.
 
 ### Backup & Restore (Nomad/Restic — Recommended)
 
@@ -63,14 +74,17 @@ ansible-playbook -i inventories/prod/hosts.ini restore.yml -e backup_file=data-Y
 ### Environments
 
 - **Production**: `inventories/prod/hosts.ini` — host `prod-manager.node.consul`, user `itpremium`
-- **QA**: `inventories/qa/hosts.ini` — host `qa-manager.node.consul`, user `itpremium`
+- **QA**: `inventories/qa/hosts.ini` — host `qa-manager.node.consul`, user `itpremium` (also contains a legacy `[old]` group pointing at a CentOS host — unused by `app.yml`)
+
+Variable defaults live in `group_vars/all.yml` (port, paths, consul service name, firewalld toggle).
 
 ### Key Paths on Target Hosts
 
 - Application: `/usr/share/manager`
 - Data: `/var/lib/manager`
-- Local backups: `/var/backups/manager`
+- Local backups: `/var/backups/manager` — pre-upgrade binary archives land here as `<iso8601_basic_short>.tgz` (e.g. `20260507T084012Z.tgz`)
 - Systemd service: `/etc/systemd/system/manager-server.service` (from `templates/manager-server.service.j2`)
+- Service port: `8080` (from `manager_port` in `group_vars/all.yml`)
 
 ### CI/CD (Jenkins)
 
@@ -87,3 +101,17 @@ Two backup mechanisms exist:
 2. **Ansible playbook** (`backup.yml`): archives data as tar.gz to S3 bucket `manager.it-premium.local` via Jenkins pipeline
 
 Prod→QA replication uses the Nomad approach: backup prod snapshot, then dispatch restore to QA with the snapshot ID.
+
+## Gotchas
+
+- **No version pinning.** `app.yml` extracts from `https://github.com/Manager-io/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz`, so each run re-resolves `latest`. QA verification does NOT pin what production will get if Manager.io ships a release between the two runs. Resolve the current `latest` tag with:
+
+  ```bash
+  curl -sI https://github.com/Manager-io/Manager/releases/latest | grep -i location
+  ```
+
+- **Pre-upgrade backup is the binary, not the data.** `app.yml` archives `/usr/share/manager` → `/var/backups/manager/<timestamp>.tgz` before each run. Useful for fast rollback of the binary, but data-level protection is the Nomad/restic flow above.
+
+- **`restore.yml` S3 download step is commented out.** You must scp the tarball to `/tmp/<backup_file>` on the host before running `ansible-playbook ... restore.yml -e backup_file=...`.
+
+- **`nginx.yml` references `app.domain`** which is not defined in `group_vars/all.yml`. Pass it via `-e app.domain=...` or extend group_vars before running.
