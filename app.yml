@@ -34,9 +34,13 @@
         dest: "{{ manager_backups }}/{{ ansible_date_time.iso8601_basic_short }}.tgz"
       tags: [backup]
 
+    - name: show which release is being installed
+      debug:
+        msg: "manager_version={{ manager_version }} url={{ manager_download_url }}"
+
     - name: extract manager
       unarchive:
-        src: "https://github.com/Manager-io/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz"
+        src: "{{ manager_download_url }}"
         dest: "{{ manager_path }}"
         remote_src: yes
 

@@ -10,4 +10,17 @@ manager_port: 8080
 
 manager_consul_name: manager
 
+# Which upstream release to install. "latest" preserves the historical
+# behaviour of re-resolving GitHub's rolling `latest` on every run — convenient,
+# but it means two runs minutes apart can install two different builds, so QA
+# does not necessarily validate what production then receives.
+# Pass an explicit tag to pin: -e manager_version=25.8.1
+manager_version: latest
+
+manager_download_url: >-
+  {{ 'https://github.com/Manager-io/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz'
+     if manager_version == 'latest'
+     else 'https://github.com/Manager-io/Manager/releases/download/'
+          ~ manager_version ~ '/ManagerServer-linux-x64.tar.gz' }}
+
 backup_file: "data-190130-0935.tar.gz"
