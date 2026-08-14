@@ -1,3 +1,11 @@
 collections:
   - community.general
   - amazon.aws
+  # app.yml's `firewalld` task lives in ansible.posix. Ansible resolves module
+  # names at parse time, so the playbook fails to load without this collection
+  # even though the task is guarded by `when: firewalld_enabled` and that is
+  # False everywhere. It went unnoticed because every machine that had run this
+  # playbook already had ansible.posix installed globally; a clean container
+  # (the manager-deployer broker) does not, and fails with
+  #   couldn't resolve module/action 'firewalld'
+  - ansible.posix
