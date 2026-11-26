@@ -104,10 +104,10 @@ Prod→QA replication uses the Nomad approach: backup prod snapshot, then dispat
 
 ## Gotchas
 
-- **No version pinning.** `app.yml` extracts from `https://github.com/Manager-io/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz`, so each run re-resolves `latest`. QA verification does NOT pin what production will get if Manager.io ships a release between the two runs. Resolve the current `latest` tag with:
+- **Version pinning (`manager_version`).** By default (`manager_version: latest`), `app.yml` extracts from `https://github.com/managerhq/Manager/releases/latest/download/ManagerServer-linux-x64.tar.gz`, re-resolving `latest` on each run. Pass `-e manager_version=<tag>` (as `manager-deployer` does) to pin an exact release tag from `managerhq/Manager`. Resolve the current `latest` tag with:
 
   ```bash
-  curl -sI https://github.com/Manager-io/Manager/releases/latest | grep -i location
+  curl -sI https://github.com/managerhq/Manager/releases/latest | grep -i location
   ```
 
 - **Pre-upgrade backup is the binary, not the data.** `app.yml` archives `/usr/share/manager` → `/var/backups/manager/<timestamp>.tgz` before each run. Useful for fast rollback of the binary, but data-level protection is the Nomad/restic flow above.
